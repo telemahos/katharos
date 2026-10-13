@@ -1,4 +1,5 @@
 /target
 /build
+/Backup
 .DS_Store
 *.swp
