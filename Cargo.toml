@@ -1,8 +1,8 @@
 [package]
 name = "katharos"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
-description = "Katharos — a fast disk cleaner for macOS"
+description = "Katharos — a fast disk cleaner and security scanner for macOS"
 license = "MIT"
 authors = ["KostasKa"]
 readme = "README.md"
@@ -15,6 +15,7 @@ trash = "5"
 plist = "1"
 blake3 = "1"
 libc = "0.2"
+serde_json = "1"
 
 [profile.release]
 opt-level = 3

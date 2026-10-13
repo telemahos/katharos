@@ -65,6 +65,16 @@ rm -rf "${DEST:?}/$APP.app"
 cp -R "$BUILD" "$DEST/"
 
 echo ""
+# 6. Προαιρετικά: ClamAV για σάρωση ιών
+if command -v brew >/dev/null 2>&1 && ! command -v clamscan >/dev/null 2>&1; then
+  echo ""
+  read -r -p "==> Να εγκατασταθεί το ClamAV για σάρωση ιών; (y/N) " ans
+  if [ "$ans" = "y" ] || [ "$ans" = "Y" ]; then
+    brew install clamav || echo "    Η εγκατάσταση του ClamAV απέτυχε. Δοκίμασε αργότερα: brew install clamav"
+  fi
+fi
+
+echo ""
 echo "✅ Έτοιμο! Το Katharos εγκαταστάθηκε στο $DEST/$APP.app"
 echo "   Το βρίσκεις στο Launchpad / Spotlight (⌘ + Space → Katharos)."
 echo ""

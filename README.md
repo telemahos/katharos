@@ -50,6 +50,7 @@ The interface is available in **English, Ελληνικά (Greek), Deutsch (Germ
 | **Uninstaller** | Removes an app together with its leftovers in `~/Library`: preferences, caches, containers, saved state, launch agents and more. |
 | **Space Lens** | Browses any folder sorted by size, so you can see at a glance what's taking up space. |
 | **Maintenance** | Frees purgeable RAM, flushes the DNS cache, reindexes Spotlight, resets Quick Look and rebuilds the Launch Services ("Open With") database. |
+| **Protection** | Virus scanning with ClamAV and a quarantine. Also checks startup items (where adware hides), app code signatures and notarization, browser extensions with risky permissions, and macOS security settings. See [Protection](#protection). |
 
 ### Built-in safety
 
@@ -58,6 +59,31 @@ The interface is available in **English, Ελληνικά (Greek), Deutsch (Germ
 - **Your own files** (large files, duplicates, apps, backups) are moved to the **Trash**, so they can be restored.
 - A hard-coded safety net blocks any removal outside your home folder (except `.app` bundles in `/Applications`). It also protects key folders such as `~/Documents`, `~/Desktop`, `~/Library` and `~/Library/Caches` themselves.
 - Apple system apps, iCloud sync caches and Photos/Music libraries are never touched.
+
+## Protection
+
+The **Protection** module turns Katharos into an on-demand security scanner. It has six tabs:
+
+| Tab | What it does |
+|---|---|
+| **Viruses** | Quick scan (Downloads, Desktop, startup items, `/Users/Shared`), full scan (home folder and Applications), or any folder or external drive. Uses the open-source [ClamAV](https://www.clamav.net) engine and its daily-updated signature database. iCloud files that aren't downloaded are skipped, so a scan never triggers mass downloads. |
+| **Quarantine** | Infected files are moved to `~/Library/Application Support/Katharos/Quarantine` and made non-executable. You can restore them, with their original permissions, or delete them permanently. |
+| **Startup items** | Lists LaunchAgents and LaunchDaemons and flags the usual adware signs: unsigned or ad-hoc-signed programs, missing programs, hidden folders, `/tmp` or `/Users/Shared` locations, and shell or Python scripts. Removing an item stops it and moves its `.plist` to the Trash. System items ask for your password. |
+| **App signatures** | Checks every third-party app's code signature (`codesign`) and Gatekeeper/notarization status (`spctl`). |
+| **Browser extensions** | Safari, Chrome, Brave, Edge, Vivaldi, Arc, Opera and Firefox. Highlights extensions that can read every website or use sensitive permissions such as cookies, history or webRequest. |
+| **Security status** | SIP, Gatekeeper, FileVault, Firewall, XProtect version and age, automatic security updates and automatic login. Each warning has a button that opens the matching System Settings pane. |
+
+### Setting up virus scanning
+
+1. Install ClamAV. In the **Viruses** tab, click **Install ClamAV**. This opens Terminal and runs `brew install clamav` (you need [Homebrew](https://brew.sh)). Alternatively, answer **y** when `install.sh` offers it.
+2. Click **Update virus database**. The first download is a few hundred MB. Katharos keeps the database in its own folder, so no administrator password is needed.
+3. Run a scan.
+
+### What it is and isn't
+
+Katharos is an **on-demand scanner**, not a real-time antivirus. Real-time blocking on macOS requires Apple's Endpoint Security entitlement, which Apple grants only to security vendors. ClamAV's signatures are also strongest for Windows malware, and its coverage of Mac-specific threats is smaller than that of commercial products.
+
+Katharos is meant to complement **XProtect**, Apple's built-in malware protection, which already runs in the background on every Mac. It isn't a replacement for it.
 
 ## Installation
 
@@ -124,6 +150,8 @@ src/
   apps.rs    app listing, leftover detection, uninstall
   lens.rs    folder size browser
   maint.rs   maintenance tasks
+  protect.rs     virus scan (ClamAV), quarantine, startup items, signatures, extensions, security checks
+  protect_ui.rs  the Protection screen
   util.rs    parallel size calculation, safe delete, Trash, formatting
   tests.rs   end-to-end tests against a fake home folder
 macos/       Info.plist and icon used to build the .app bundle

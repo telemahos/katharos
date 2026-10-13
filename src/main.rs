@@ -6,6 +6,8 @@ mod i18n;
 mod junk;
 mod lens;
 mod maint;
+mod protect;
+mod protect_ui;
 mod util;
 #[cfg(test)]
 mod tests;
@@ -13,6 +15,7 @@ mod tests;
 use eframe::egui::{self, Align, Color32, Layout, RichText, Sense, Vec2};
 use files::{DupGroup, FileInfo};
 use i18n::{t, tf, K};
+use protect_ui::{PConfirm, PMsg, ProtectState};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -42,7 +45,7 @@ fn main() -> eframe::Result<()> {
     }
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1120.0, 740.0])
+            .with_inner_size([1160.0, 760.0])
             .with_min_inner_size([920.0, 600.0])
             .with_title("Katharos"),
         ..Default::default()
@@ -84,6 +87,7 @@ fn cli_scan() {
 #[derive(PartialEq, Clone, Copy)]
 enum View {
     Smart,
+    Protect,
     Large,
     Dupes,
     Uninstall,
@@ -101,6 +105,7 @@ enum Msg {
     Lens(PathBuf, Vec<lens::Entry>),
     Removed { ok: Vec<PathBuf>, bytes: u64, errors: Vec<String> },
     Maint(String),
+    Protect(PMsg),
 }
 
 enum Confirm {
@@ -109,6 +114,7 @@ enum Confirm {
     TrashDupes,
     Uninstall,
     TrashLens(PathBuf, u64),
+    Protect(PConfirm),
 }
 
 struct App {
@@ -147,6 +153,8 @@ struct App {
     lens_loaded_for: Option<PathBuf>,
 
     maint_log: Vec<String>,
+
+    p: ProtectState,
 }
 
 impl App {
@@ -183,6 +191,7 @@ impl App {
             lens: Vec::new(),
             lens_loaded_for: None,
             maint_log: Vec::new(),
+            p: ProtectState::default(),
         }
     }
 
@@ -283,6 +292,7 @@ impl App {
                     self.disk = disk_space();
                 }
                 Msg::Maint(s) => self.maint_log.push(s),
+                Msg::Protect(pm) => self.handle_protect(pm),
             }
         }
     }
@@ -385,6 +395,7 @@ impl eframe::App for App {
             .frame(egui::Frame::new().fill(Color32::from_rgb(22, 22, 30)).inner_margin(24.0))
             .show(ctx, |ui| match self.view {
                 View::Smart => self.ui_smart(ui, ctx),
+                View::Protect => self.ui_protect(ui, ctx),
                 View::Large => self.ui_large(ui, ctx),
                 View::Dupes => self.ui_dupes(ui, ctx),
                 View::Uninstall => self.ui_uninstall(ui, ctx),
@@ -404,6 +415,7 @@ impl App {
         ui.add_space(18.0);
         let items = [
             (View::Smart, "♻", K::NavSmart),
+            (View::Protect, "🛡", K::NavProtect),
             (View::Large, "📦", K::NavLarge),
             (View::Dupes, "📑", K::NavDupes),
             (View::Uninstall, "🗑", K::NavUninstall),
@@ -1056,6 +1068,7 @@ impl App {
                 tf(K::TrashOneBody, &[&tilde(p), &human(*s)]),
                 t(K::MoveToTrash),
             ),
+            Confirm::Protect(pc) => self.protect_confirm_text(pc),
         };
         let mut decision: Option<bool> = None;
         egui::Modal::new(egui::Id::new("confirm")).show(ctx, |ui| {
@@ -1131,6 +1144,7 @@ impl App {
                     Msg::Removed { ok, bytes, errors }
                 });
             }
+            Confirm::Protect(pc) => self.execute_protect(pc, ctx),
         }
     }
 }
