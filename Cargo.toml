@@ -1,0 +1,24 @@
+[package]
+name = "katharos"
+version = "1.0.0"
+edition = "2021"
+description = "Katharos — a fast disk cleaner for macOS"
+license = "MIT"
+authors = ["KostasKa"]
+readme = "README.md"
+
+[dependencies]
+eframe = "0.31"
+rayon = "1.10"
+dirs = "6"
+trash = "5"
+plist = "1"
+blake3 = "1"
+libc = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
